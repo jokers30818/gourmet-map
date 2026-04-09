@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新規投稿 - 身内グルメマップ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -17,9 +20,27 @@
     <div class="card">
         <form th:action="@{/form}" th:object="${shop}" method="post">
             <div class="form-group">
+                <label for="posterName">あなたの名前（ニックネーム） <span style="color:red">*</span></label>
+                <input type="text" id="posterName" th:field="*{posterName}" maxlength="50" required placeholder="例: Yamada">
+            </div>
+
+            <div class="form-group">
                 <label for="name">店名 <span style="color:red">*</span></label>
                 <input type="text" id="name" th:field="*{name}" maxlength="100" required>
                 <span class="error-message" th:if="${#fields.hasErrors('name')}" th:errors="*{name}">Name Error</span>
+            </div>
+
+            <div class="form-group">
+                <label for="area">エリア <span style="color:red">*</span></label>
+                <select id="area" th:field="*{area}" required>
+                    <option value="">選択してください</option>
+                    <option value="新宿">新宿</option>
+                    <option value="渋谷">渋谷</option>
+                    <option value="港区">港区</option>
+                    <option value="銀座">銀座</option>
+                    <option value="その他">その他</option>
+                </select>
+                <span class="error-message" th:if="${#fields.hasErrors('area')}" th:errors="*{area}">Area Error</span>
             </div>
 
             <div class="form-group">
@@ -30,14 +51,17 @@
                     <option value="居酒屋">居酒屋</option>
                     <option value="カフェ">カフェ</option>
                     <option value="イタリアン">イタリアン</option>
+                    <option value="和食">和食</option>
+                    <option value="焼肉">焼肉</option>
+                    <option value="スイーツ">スイーツ</option>
                     <option value="その他">その他</option>
                 </select>
                 <span class="error-message" th:if="${#fields.hasErrors('category')}" th:errors="*{category}">Category Error</span>
             </div>
 
             <div class="form-group">
-                <label for="rating">評価 (1-5) <span style="color:red">*</span></label>
-                <input type="number" id="rating" th:field="*{rating}" min="1" max="5" required>
+                <label for="rating">評価 (1.0 - 5.0) <span style="color:red">*</span></label>
+                <input type="number" step="0.5" id="rating" th:field="*{rating}" min="1.0" max="5.0" required>
                 <span class="error-message" id="rating-error" th:if="${#fields.hasErrors('rating')}" th:errors="*{rating}">Rating Error</span>
             </div>
 
@@ -64,15 +88,51 @@
             </div>
 
             <div class="form-group">
+                <label for="recommendedMenu">おすすめメニュー (任意)</label>
+                <input type="text" id="recommendedMenu" th:field="*{recommendedMenu}" maxlength="100" placeholder="看板メニューなど">
+            </div>
+
+            <div class="form-group">
+                <label for="tags">タグ（任意・カンマまたはスペース区切り）</label>
+                <input type="text" id="tags" th:field="*{tags}" maxlength="100" placeholder="例: #デート #深夜営業 #日本酒">
+            </div>
+
+            <div class="form-group">
                 <label for="comment">推しポイント <span style="color:red">*</span></label>
-                <textarea id="comment" th:field="*{comment}" maxlength="500" required placeholder="お店の魅力やおすすめメニューなど"></textarea>
+                <textarea id="comment" th:field="*{comment}" maxlength="500" required placeholder="お店の魅力など"></textarea>
                 <span class="error-message" id="comment-error" th:if="${#fields.hasErrors('comment')}" th:errors="*{comment}">Comment Error</span>
             </div>
 
-            <button type="submit" class="btn" id="submit-btn">投稿する</button>
+            <div class="form-group">
+                <label>画像URL (最大5枚、任意)</label>
+                <input type="url" th:field="*{imageUrl1}" placeholder="画像URL 1" style="margin-bottom: 5px;">
+                <input type="url" th:field="*{imageUrl2}" placeholder="画像URL 2" style="margin-bottom: 5px;">
+                <input type="url" th:field="*{imageUrl3}" placeholder="画像URL 3" style="margin-bottom: 5px;">
+                <input type="url" th:field="*{imageUrl4}" placeholder="画像URL 4" style="margin-bottom: 5px;">
+                <input type="url" th:field="*{imageUrl5}" placeholder="画像URL 5" style="margin-bottom: 5px;">
+            </div>
+
+            <button type="submit" class="btn" id="submit-btn" style="margin-top: 15px;">投稿する</button>
             <a th:href="@{/}" class="btn btn-secondary" style="margin-top: 10px;">キャンセル</a>
         </form>
     </div>
 </div>
+
+<!-- Bottom Navigation for Mobile -->
+<nav class="bottom-nav">
+    <a th:href="@{/}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">ホーム</span>
+    </a>
+    <a th:href="@{/map}" class="nav-item">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-text">マップ</span>
+    </a>
+    <a th:href="@{/form}" class="nav-item active">
+        <span class="nav-icon">➕</span>
+        <span class="nav-text">投稿する</span>
+    </a>
+</nav>
+
 </body>
 </html>

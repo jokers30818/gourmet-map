@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${shop.name} + ' - 身内グルメマップ'">詳細 - 身内グルメマップ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -15,7 +18,28 @@
 </header>
 <div class="container">
     <div class="card detail-content">
-        <h2 style="color: var(--primary-color); margin-top:0;" th:text="${shop.name}">店名</h2>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <h2 class="detail-title" th:text="${shop.name}" style="margin: 0;">店名</h2>
+        </div>
+        <div class="shop-tags" th:if="${shop.tags != null and !shop.tags.isEmpty()}" style="margin-bottom: 15px; color: #3498db; font-size: 0.9rem; font-weight: bold;">
+            Tags: <span th:text="${shop.tags}"></span>
+        </div>
+        
+        <div class="image-gallery slider">
+            <img th:if="${shop.imageUrl1 != null and !shop.imageUrl1.isEmpty()}" th:src="${shop.imageUrl1}" onerror="this.style.display='none'">
+            <img th:if="${shop.imageUrl2 != null and !shop.imageUrl2.isEmpty()}" th:src="${shop.imageUrl2}" onerror="this.style.display='none'">
+            <img th:if="${shop.imageUrl3 != null and !shop.imageUrl3.isEmpty()}" th:src="${shop.imageUrl3}" onerror="this.style.display='none'">
+            <img th:if="${shop.imageUrl4 != null and !shop.imageUrl4.isEmpty()}" th:src="${shop.imageUrl4}" onerror="this.style.display='none'">
+            <img th:if="${shop.imageUrl5 != null and !shop.imageUrl5.isEmpty()}" th:src="${shop.imageUrl5}" onerror="this.style.display='none'">
+            
+            <img th:if="${(shop.imageUrl1 == null or shop.imageUrl1.isEmpty()) and (shop.imageUrl2 == null or shop.imageUrl2.isEmpty()) and (shop.imageUrl3 == null or shop.imageUrl3.isEmpty()) and (shop.imageUrl4 == null or shop.imageUrl4.isEmpty()) and (shop.imageUrl5 == null or shop.imageUrl5.isEmpty())}" 
+                 src="https://placehold.co/600x400/eeeeee/999999?text=No+Image" alt="No Image">
+        </div>
+
+        <div class="detail-item">
+            <div class="detail-label">エリア</div>
+            <div class="detail-value" th:text="${shop.area}">エリア</div>
+        </div>
         
         <div class="detail-item">
             <div class="detail-label">カテゴリ</div>
@@ -34,6 +58,11 @@
             <div class="detail-value" th:text="${shop.budget}">予算</div>
         </div>
         
+        <div th:if="${shop.recommendedMenu != null and !shop.recommendedMenu.isEmpty()}" class="detail-item">
+            <div class="detail-label">お店のおすすめメニュー</div>
+            <div class="detail-value recommended-highlight">👑 <span th:text="${shop.recommendedMenu}"></span></div>
+        </div>
+
         <div th:if="${shop.hideawayLevel != null and !shop.hideawayLevel.isEmpty()}" class="detail-item">
             <div class="detail-label">隠れ家度</div>
             <div class="detail-value" th:text="${shop.hideawayLevel}">中</div>
@@ -44,24 +73,87 @@
             <div class="detail-value" style="white-space: pre-wrap;" th:text="${shop.comment}">コメント</div>
         </div>
         
+        <div class="detail-item" style="border-bottom: none; color: #7f8c8d; font-size: 0.9rem;">
+            🗣️ 投稿者: <span th:text="${shop.posterName}"></span>
+        </div>
+        
         <div class="detail-item" style="border-bottom: none; color: #b2bec3; font-size: 0.8rem; padding-bottom: 0;">
             投稿日時: <span th:text="${#temporals.format(shop.createdAt, 'yyyy-MM-dd HH:mm')}"></span>
         </div>
     </div>
     
-    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <a th:href="@{'https://www.google.com/maps/search/?api=1&query=' + ${shop.name}}" target="_blank" rel="noopener noreferrer" class="btn btn-maps" style="flex: 1; display: flex; justify-content: center; align-items: center; gap: 5px;">
-            📍 Google Maps で開く
-        </a>
+    <!-- Reviews Section -->
+    <div class="card detail-content" style="margin-top: 20px;">
+        <h3 style="font-size: 1.1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-top: 0;">💬 みんなの口コミ</h3>
         
-        <form th:action="@{/reaction/{id}(id=${shop.id})}" method="post" style="flex: 1;">
-            <button type="submit" class="btn btn-reaction" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 5px;">
-                👍 行ったよ！ <span class="badge" th:text="${shop.reactionCount}">0</span>
-            </button>
+        <div th:if="${#lists.isEmpty(shop.reviews)}" style="color: #95a5a6; padding: 10px 0; text-align: center;">
+            まだ口コミがありません。一番乗りで感想を書こう！
+        </div>
+
+        <div th:each="review : ${shop.reviews}" style="border-bottom: 1px solid var(--border-color); padding: 15px 0;">
+            <div style="font-weight: bold; color: var(--text-color); margin-bottom: 5px;">
+                🗣️ <span th:text="${review.posterName}">名前</span>
+            </div>
+            <div style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.5; color: var(--text-color);" th:text="${review.comment}">コメント</div>
+            <div style="font-size: 0.8rem; color: #b2bec3; padding-top: 5px; text-align: right;" th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}">日時</div>
+        </div>
+
+        <form th:action="@{/review/{id}(id=${shop.id})}" method="post" style="margin-top: 20px; background-color: #f8f9fa; padding: 15px; border-radius: 8px;">
+            <h4 style="margin-top: 0; font-size: 1rem;">✍️ 新しい口コミを投稿する</h4>
+            <div class="form-group" style="margin-bottom: 10px;">
+                <input type="text" name="posterName" placeholder="お名前" required maxlength="50" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%;">
+            </div>
+            <div class="form-group" style="margin-bottom: 10px;">
+                <textarea name="comment" placeholder="感想を書いてください！" required maxlength="500" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; height: 80px;"></textarea>
+            </div>
+            <button type="submit" class="btn" style="padding: 8px 15px; font-size: 0.9rem;">送信する</button>
         </form>
     </div>
+    
+    <div class="map-container" style="margin-bottom: 20px;">
+        <iframe
+            th:src="@{'https://www.google.com/maps?q=' + ${shop.name} + '+' + ${shop.area} + '&output=embed'}"
+            width="100%" height="250" style="border:0; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);" allowfullscreen="" loading="lazy"></iframe>
+    </div>
 
-    <a th:href="@{/}" class="btn btn-secondary">一覧へ戻る</a>
+    <div class="action-buttons-group">
+        <a th:href="@{'https://www.google.com/maps/search/?api=1&query=' + ${shop.name} + '+' + ${shop.area}}" target="_blank" rel="noopener noreferrer" class="btn btn-maps">
+            📍 Google Maps アプリ等で開く
+        </a>
+        
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <form th:action="@{/reaction/{id}(id=${shop.id})}" method="post" style="flex: 1;">
+                <button type="submit" class="btn btn-reaction" style="width: 100%;">
+                    👍 行ったよ！ <span class="badge" th:text="${shop.reactionCount}">0</span>
+                </button>
+            </form>
+
+            <form th:action="@{/wanttogo/{id}(id=${shop.id})}" method="post" style="flex: 1;">
+                <button type="submit" class="btn btn-reaction" style="width: 100%; background-color: #f1c40f; color: #d35400;">
+                    ⭐️ 行きたい！ <span class="badge" th:text="${shop.wantToGoCount}" style="background-color: #d35400; color: white;">0</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <a th:href="@{/}" class="btn btn-secondary back-btn">一覧へ戻る</a>
 </div>
+
+<!-- Bottom Navigation for Mobile -->
+<nav class="bottom-nav">
+    <a th:href="@{/}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">ホーム</span>
+    </a>
+    <a th:href="@{/map}" class="nav-item">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-text">マップ</span>
+    </a>
+    <a th:href="@{/form}" class="nav-item">
+        <span class="nav-icon">➕</span>
+        <span class="nav-text">投稿する</span>
+    </a>
+</nav>
+
 </body>
 </html>

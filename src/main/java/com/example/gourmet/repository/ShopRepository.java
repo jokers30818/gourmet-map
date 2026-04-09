@@ -16,7 +16,14 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
     
     @Query("SELECT s FROM Shop s WHERE " +
            "(:category IS NULL OR :category = '' OR s.category = :category) AND " +
-           "(:budget IS NULL OR :budget = '' OR s.budget = :budget) " +
-           "ORDER BY s.createdAt DESC")
-    List<Shop> searchShops(@Param("category") String category, @Param("budget") String budget);
+           "(:area IS NULL OR :area = '' OR s.area = :area) AND " +
+           "(:rating IS NULL OR s.rating >= :rating) AND " +
+           "(:budget IS NULL OR :budget = '' OR s.budget = :budget) AND " +
+           "(:tags IS NULL OR :tags = '' OR s.tags LIKE %:tags% OR s.name LIKE %:tags%)")
+    List<Shop> searchShops(@Param("category") String category, 
+                           @Param("area") String area, 
+                           @Param("rating") Double rating, 
+                           @Param("budget") String budget,
+                           @Param("tags") String tags,
+                           org.springframework.data.domain.Sort sort);
 }

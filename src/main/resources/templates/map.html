@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地図で見る - 身内グルメマップ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <style>
+        #map { height: calc(100vh - 140px); width: 100%; border-radius: 8px; z-index: 1;}
+        .leaflet-popup-content-wrapper { border-radius: 8px; }
+        .popup-img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>地図で見る</h1>
+    <div class="header-actions">
+        <a th:href="@{/}">リストへ戻る</a>
+    </div>
+</header>
+
+<div class="container" style="max-width: 100%; padding: 10px;">
+    <div id="map"></div>
+</div>
+
+<!-- Bottom Navigation for Mobile -->
+<nav class="bottom-nav">
+    <a th:href="@{/}" class="nav-item">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">ホーム</span>
+    </a>
+    <a th:href="@{/map}" class="nav-item active">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-text">マップ</span>
+    </a>
+    <a th:href="@{/form}" class="nav-item">
+        <span class="nav-icon">➕</span>
+        <span class="nav-text">投稿する</span>
+    </a>
+</nav>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+    // Initialize map centered on Tokyo
+    var map = L.map('map').setView([35.6812, 139.7671], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Fetch shops API
+    fetch('/api/shops')
+        .then(response => response.json())
+        .then(shops => {
+            var bounds = [];
+            shops.forEach(shop => {
+                var latLng = [shop.latitude, shop.longitude];
+                var marker = L.marker(latLng).addTo(map);
+                bounds.push(latLng);
+
+                var imgHtml = shop.imageUrl ? `<img src="${shop.imageUrl}" class="popup-img" onerror="this.style.display='none'">` : '';
+                var popupContent = `
+                    <div style="text-align: center; min-width: 150px;">
+                        ${imgHtml}
+                        <h3 style="margin: 5px 0 0 0; font-size: 1rem;">${shop.name}</h3>
+                        <p style="margin: 2px 0; color: #666; font-size: 0.8rem;">${shop.area} / ${shop.category}</p>
+                        <p style="margin: 2px 0; color: #f39c12; font-weight:bold;">★ ${shop.rating}</p>
+                        <a href="/detail/${shop.id}" style="display: inline-block; margin-top: 8px; background: var(--primary-color); color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">詳細を見る</a>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+            });
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, {padding: [30, 30]}); // Zoom to fit all markers
+            }
+        })
+        .catch(error => console.error('Error fetching shops:', error));
+</script>
+</body>
+</html>

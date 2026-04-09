@@ -27,10 +27,12 @@ describe('身内グルメマップ E2E Tests', () => {
 
       // 2. フォーム入力
       cy.get('#name').type(testShopName);
+      cy.get('#area').select('新宿');
       cy.get('#category').select('ラーメン');
-      cy.get('#rating').type('5');
+      cy.get('#rating').type('5.0');
       cy.get('#budget').select('～1000円');
       cy.get('#hideawayLevel').select('高');
+      cy.get('#recommendedMenu').type('特製らーめん');
       cy.get('#comment').type(testComment);
 
       // 3. 送信
@@ -45,11 +47,30 @@ describe('身内グルメマップ E2E Tests', () => {
       cy.url().should('include', '/detail/');
       cy.get('.detail-content').within(() => {
         cy.contains(testShopName);
+        cy.contains('新宿');
         cy.contains('ラーメン');
+        cy.contains('特製らーめん');
         cy.contains('～1000円');
         cy.contains('高');
         cy.contains(testComment);
       });
+    });
+
+    it('正常系：エリア指定、星の数での検索ができること', () => {
+      cy.visit('/');
+      
+      // エリアで検索 (新宿)
+      cy.get('#filter-area').select('新宿');
+      cy.get('#filter-btn').click();
+      cy.url().should('include', 'area=%E6%96%B0%E5%AE%BF'); // URL encoded "新宿"
+      
+      // 星の数で検索 (4.5以上)
+      cy.get('#filter-rating').clear().type('4.5');
+      cy.get('#filter-btn').click();
+      cy.url().should('include', 'rating=4.5');
+      
+      // 結果表示確認（検索結果があればカードが表示される）
+      cy.get('.container').should('be.visible');
     });
 
     it('異常系：必須項目未入力での投稿（クライアントサイド/サーバーサイド検証）', () => {
@@ -72,6 +93,7 @@ describe('身内グルメマップ E2E Tests', () => {
 
       // Check for Thymeleaf generated error messages
       cy.contains('.error-message', '店名は必須です').should('be.visible');
+      cy.contains('.error-message', 'エリアは必須です').should('be.visible');
       cy.contains('.error-message', 'カテゴリは必須です').should('be.visible');
       cy.contains('.error-message', '評価は必須です').should('be.visible');
       cy.contains('.error-message', '予算感は必須です').should('be.visible');
@@ -91,8 +113,8 @@ describe('身内グルメマップ E2E Tests', () => {
       // 検索フォームが縦に並ぶかなどの基本確認
       cy.get('.filter-form').should('be.visible');
       
-      // Floating action button needs to be clickable
-      cy.get('.floating-action').should('be.visible').click();
+      // Bottom navigation '投稿する' button needs to be clickable
+      cy.get('.bottom-nav .nav-item').contains('投稿する').should('be.visible').click();
       
       cy.url().should('include', '/form');
       

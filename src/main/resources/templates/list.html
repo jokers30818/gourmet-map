@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一覧 - 身内グルメマップ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -16,16 +19,33 @@
     </div>
 </header>
 <div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="font-size: 1.2rem; margin: 0; color: var(--text-color);">お店一覧</h2>
+        <a th:href="@{/map}" class="btn" style="background-color: #2ecc71; text-decoration: none; display: inline-block;">🗺️ 地図で見る</a>
+    </div>
+    
     <div class="card">
-        <form class="filter-form" th:action="@{/}" method="get">
+        <form class="filter-form" th:action="@{/}" method="get" style="flex-wrap: wrap;">
+            <select name="area" id="filter-area">
+                <option value="">すべてのエリア</option>
+                <option value="新宿" th:selected="${selectedArea == '新宿'}">新宿</option>
+                <option value="渋谷" th:selected="${selectedArea == '渋谷'}">渋谷</option>
+                <option value="港区" th:selected="${selectedArea == '港区'}">港区</option>
+                <option value="銀座" th:selected="${selectedArea == '銀座'}">銀座</option>
+                <option value="その他" th:selected="${selectedArea == 'その他'}">その他</option>
+            </select>
             <select name="category" id="filter-category">
                 <option value="">すべてのカテゴリ</option>
                 <option value="ラーメン" th:selected="${selectedCategory == 'ラーメン'}">ラーメン</option>
                 <option value="居酒屋" th:selected="${selectedCategory == '居酒屋'}">居酒屋</option>
                 <option value="カフェ" th:selected="${selectedCategory == 'カフェ'}">カフェ</option>
                 <option value="イタリアン" th:selected="${selectedCategory == 'イタリアン'}">イタリアン</option>
+                <option value="和食" th:selected="${selectedCategory == '和食'}">和食</option>
+                <option value="焼肉" th:selected="${selectedCategory == '焼肉'}">焼肉</option>
+                <option value="スイーツ" th:selected="${selectedCategory == 'スイーツ'}">スイーツ</option>
                 <option value="その他" th:selected="${selectedCategory == 'その他'}">その他</option>
             </select>
+            <input type="number" name="rating" id="filter-rating" step="0.5" min="1.0" max="5.0" th:value="${selectedRating}" placeholder="評価(以上)">
             <select name="budget" id="filter-budget">
                 <option value="">すべての予算</option>
                 <option value="～1000円" th:selected="${selectedBudget == '～1000円'}">～1000円</option>
@@ -33,25 +53,59 @@
                 <option value="～5000円" th:selected="${selectedBudget == '～5000円'}">～5000円</option>
                 <option value="5000円～" th:selected="${selectedBudget == '5000円～'}">5000円～</option>
             </select>
-            <button type="submit" class="btn" style="width: auto;" id="filter-btn">検索</button>
+            <input type="text" name="tags" id="filter-tags" th:value="${selectedTags}" placeholder="タグ・店名検索">
+            <select name="sortField" id="filter-sort">
+                <option value="createdAt" th:selected="${selectedSort == 'createdAt' || selectedSort == null}">新着順</option>
+                <option value="rating" th:selected="${selectedSort == 'rating'}">★評価順</option>
+                <option value="reactions" th:selected="${selectedSort == 'reactions'}">👍行ったよ順</option>
+                <option value="wanttogo" th:selected="${selectedSort == 'wanttogo'}">⭐️行きたい順</option>
+            </select>
+            <button type="submit" class="btn filter-btn" id="filter-btn">検索</button>
         </form>
     </div>
 
     <div th:each="shop : ${shops}" class="card shop-card">
         <a th:href="@{/detail/{id}(id=${shop.id})}" class="shop-item">
-            <div class="shop-header">
-                <h3 class="shop-title" th:text="${shop.name}">店名</h3>
-                <div style="display: flex; gap: 10px;">
-                    <div class="shop-rating" style="color: #3498db; font-weight: bold;" th:if="${shop.reactionCount > 0}">👍 <span th:text="${shop.reactionCount}">0</span></div>
-                    <div class="shop-rating">★ <span th:text="${shop.rating}">3</span></div>
+            <div class="shop-image-container">
+                <img th:src="${shop.imageUrl1 != null and !shop.imageUrl1.isEmpty() ? shop.imageUrl1 : 'https://placehold.co/600x400/eeeeee/999999?text=No+Image'}" 
+                     alt="Shop Image" class="shop-thumbnail" onerror="this.src='https://placehold.co/600x400/eeeeee/999999?text=No+Image'">
+            </div>
+            <div class="shop-info">
+                <div class="shop-header">
+                    <h3 class="shop-title" th:text="${shop.name}">店名</h3>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="shop-rating reaction-count" th:if="${shop.wantToGoCount > 0}" style="background-color: #ffeaa7; color: #d35400;">⭐️ <span th:text="${shop.wantToGoCount}">0</span></div>
+                        <div class="shop-rating reaction-count" th:if="${shop.reactionCount > 0}">👍 <span th:text="${shop.reactionCount}">0</span></div>
+                        <div class="shop-rating">★ <span th:text="${shop.rating}">3.0</span></div>
+                    </div>
                 </div>
+                
+                <!-- Google Maps Mini iframe -->
+                <div class="shop-map-mini" style="margin-bottom: 15px;">
+                    <iframe
+                        th:src="@{'https://www.google.com/maps?q=' + ${shop.name} + '+' + ${shop.area} + '&output=embed'}"
+                        width="100%" height="150" style="border:0; border-radius: 8px; pointer-events: none;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+
+                <div class="shop-meta">
+                    <span class="shop-area" th:text="${shop.area}">エリア</span>
+                    <span class="shop-category" th:text="${shop.category}">カテゴリ</span>
+                    <span class="shop-budget" th:text="${shop.budget}">予算</span>
+                    <span class="shop-hideaway" th:if="${shop.hideawayLevel != null and !shop.hideawayLevel.isEmpty()}" th:text="'隠れ家度: ' + ${shop.hideawayLevel}">隠れ家度</span>
+                </div>
+                <div class="shop-tags" th:if="${shop.tags != null and !shop.tags.isEmpty()}" style="margin-top: 5px; color: #3498db; font-size: 0.85rem; font-weight: bold;">
+                    Tags: <span th:text="${shop.tags}"></span>
+                </div>
+                <div style="font-size: 0.85rem; color: #7f8c8d; margin-top: 5px;">
+                    🗣️ 投稿者: <span th:text="${shop.posterName}"></span>
+                </div>
+                <!-- Recommended Menu -->
+                <div class="shop-recommended" th:if="${shop.recommendedMenu != null and !shop.recommendedMenu.isEmpty()}" style="margin-top: 5px; font-size: 0.9rem; color: #ff6b6b; font-weight: bold;">
+                    👑 おすすめ: <span th:text="${shop.recommendedMenu}"></span>
+                </div>
+                
+                <p class="shop-comment" th:text="${shop.comment}">コメントが入ります</p>
             </div>
-            <div class="shop-meta">
-                <span class="shop-category" th:text="${shop.category}">カテゴリ</span>
-                <span class="shop-budget" th:text="${shop.budget}">予算</span>
-                <span class="shop-hideaway" th:if="${shop.hideawayLevel != null and !shop.hideawayLevel.isEmpty()}" th:text="'隠れ家度: ' + ${shop.hideawayLevel}">隠れ家度</span>
-            </div>
-            <p class="shop-comment" th:text="${shop.comment}">コメントが入ります</p>
         </a>
     </div>
     
@@ -61,5 +115,22 @@
     
     <a th:href="@{/form}" class="floating-action" id="new-post-btn">+</a>
 </div>
+
+<!-- Bottom Navigation for Mobile -->
+<nav class="bottom-nav">
+    <a th:href="@{/}" class="nav-item active">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-text">ホーム</span>
+    </a>
+    <a th:href="@{/map}" class="nav-item">
+        <span class="nav-icon">🗺️</span>
+        <span class="nav-text">マップ</span>
+    </a>
+    <a th:href="@{/form}" class="nav-item">
+        <span class="nav-icon">➕</span>
+        <span class="nav-text">投稿する</span>
+    </a>
+</nav>
+
 </body>
 </html>
